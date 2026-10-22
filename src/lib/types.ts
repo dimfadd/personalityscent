@@ -78,6 +78,8 @@ export type Recommendation = {
   gender: PerfumeGender;
   match: number;
   sharedAccords: AccordId[];
+  /** perfume's strongest accords, strongest first */
+  accords: AccordId[];
   priceIdr: number;
   sizeMl: number;
   origin: "local" | "international";

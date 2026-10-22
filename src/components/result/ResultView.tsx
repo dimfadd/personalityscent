@@ -6,6 +6,7 @@ import { useLocale } from "@/components/LocaleProvider";
 import { LangSwitch } from "@/components/LangSwitch";
 import { Wordmark } from "@/components/PyramidMark";
 import { RecCard } from "./RecCard";
+import { PerfumeBottle } from "@/components/PerfumeBottle";
 import { SiteFooter } from "@/components/SiteFooter";
 import { track } from "@/lib/pixel";
 import { ACCORD_MAP } from "@/data/accords";
@@ -115,7 +116,19 @@ export function ResultView({ id, profile, paid: initialPaid, price }: { id: stri
 
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-24 sm:px-6">
         {/* Reveal */}
-        <section className="pt-14 text-center sm:pt-20">
+        <section className="pt-10 text-center sm:pt-14">
+          <motion.div className="mx-auto mb-6 w-fit" initial={reduce ? false : { opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}>
+            <PerfumeBottle
+              colors={(["base", "heart", "top"] as const).map((pos) => ACCORD_MAP[profile.pyramid[pos][0]?.accord ?? profile.topAccords[0].id].color) as [string, string, string]}
+              label={profile.family.primary[locale]}
+              shape="classic"
+              mist
+              delay={0.3}
+              fill={0.8}
+              title={`${t.result.kicker}: ${familyName}`}
+              className="h-56 w-auto drop-shadow-[0_30px_40px_rgba(0,0,0,0.6)] sm:h-72"
+            />
+          </motion.div>
           <motion.p className="label" initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }}>
             {t.result.kicker} · {t.result.family}
           </motion.p>

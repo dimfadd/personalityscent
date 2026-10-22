@@ -3,6 +3,7 @@ import { useLocale } from "@/components/LocaleProvider";
 import { ACCORD_MAP } from "@/data/accords";
 import { idrShort, shopLinks } from "@/lib/format";
 import type { Recommendation } from "@/lib/types";
+import { PerfumeBottle, shapeFor } from "@/components/PerfumeBottle";
 
 const TIER: Record<Recommendation["tier"], { id: string; en: string }> = {
   affordable: { id: "Terjangkau", en: "Affordable" },
@@ -17,7 +18,14 @@ export function RecCard({ r, featured = false, children, preview = false }: { r:
   return (
     <div className={`flex h-full flex-col rounded-2xl border p-5 sm:p-6 ${featured ? "border-amber/70 bg-amber/[0.05]" : "border-line bg-ink-2/40"}`}>
       <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
+        <PerfumeBottle
+          colors={bottleColors(r)}
+          shape={shapeFor(r.perfumeId)}
+          shine={false}
+          fill={0.72}
+          className={`shrink-0 ${featured ? "h-24 w-[60px]" : "h-20 w-[50px]"}`}
+        />
+        <div className="min-w-0 flex-1">
           <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted">
             <span>{r.brand}</span>
             <span aria-hidden>·</span>
@@ -68,4 +76,11 @@ export function RecCard({ r, featured = false, children, preview = false }: { r:
       {children && <div className="mt-auto pt-5">{children}</div>}
     </div>
   );
+}
+
+/** Illustrative liquid: strongest accord at the base, lightest on top. */
+function bottleColors(r: Recommendation): [string, string, string] {
+  const a = r.accords.length ? r.accords : r.sharedAccords;
+  const c = a.map((x) => ACCORD_MAP[x].color);
+  return [c[0] ?? "#9c7652", c[1] ?? c[0] ?? "#cfa968", c[2] ?? c[1] ?? c[0] ?? "#e8c547"];
 }

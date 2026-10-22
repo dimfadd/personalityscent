@@ -141,8 +141,13 @@ export function familyOf(v: AccordVector): ScentProfile["family"] {
 export function buildPyramid(v: AccordVector, avoided: AccordId[], preferNotes: string[] = []): Record<NotePosition, PyramidNote[]> {
   const out: Record<NotePosition, PyramidNote[]> = { top: [], heart: [], base: [] };
   for (const pos of ["top", "heart", "base"] as NotePosition[]) {
-    const ranked = NOTES.filter((x) => x.position === pos && !avoided.includes(x.accord) && v[x.accord] > 0)
-      .map((x, i) => ({ x, s: v[x.accord] + (preferNotes.includes(x.id) ? 25 : 0) - i * 0.01 }))
+    // Perfumers usually open with citrus or fresh spice, so those get a small lift on top;
+    // accords the person barely scored on are only used when nothing better exists.
+    const lift = (a: AccordId) => (pos === "top" && (a === "citrus" || a === "fresh_spicy") ? 15 : 0);
+    const pool = NOTES.filter((x) => x.position === pos && !avoided.includes(x.accord) && v[x.accord] > 0);
+    const strong = pool.filter((x) => v[x.accord] + lift(x.accord) >= 30);
+    const ranked = (strong.length >= 3 ? strong : pool)
+      .map((x, i) => ({ x, s: v[x.accord] + lift(x.accord) + (preferNotes.includes(x.id) ? 25 : 0) - i * 0.01 }))
       .sort((a, b) => b.s - a.s);
     const perAccord: Record<string, number> = {};
     for (const { x } of ranked) {
@@ -209,6 +214,7 @@ export function recommend(profile: Pick<ScentProfile, "vector" | "avoided">, a: 
     gender: p.gender,
     match: Math.max(0, Math.min(99, Math.round(s * 100))),
     sharedAccords: shared,
+    accords: (Object.entries(p.accords) as [AccordId, number][]).sort((x, y) => y[1] - x[1]).slice(0, 3).map(([k]) => k),
     notes: p.notes,
     priceIdr: p.priceIdr,
     sizeMl: p.sizeMl,

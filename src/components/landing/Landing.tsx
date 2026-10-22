@@ -8,6 +8,8 @@ import { Wordmark } from "@/components/PyramidMark";
 import { SiteFooter } from "@/components/SiteFooter";
 import { RecCard } from "@/components/result/RecCard";
 import { Simulation } from "./Simulation";
+import { HeroBottle } from "./HeroBottle";
+import { PerfumeBottle } from "@/components/PerfumeBottle";
 import { ACCORD_MAP } from "@/data/accords";
 import { WEIGHTS } from "@/lib/weights";
 import { idr, idrShort } from "@/lib/format";
@@ -128,7 +130,7 @@ function Hero() {
   return (
     <section className="relative overflow-hidden">
       <div aria-hidden className="pointer-events-none absolute -top-40 left-1/2 h-[520px] w-[900px] -translate-x-1/2 rounded-full bg-amber/[0.07] blur-3xl" />
-      <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 pb-20 pt-10 sm:px-6 md:pt-16 lg:grid-cols-[1.15fr_1fr] lg:gap-14 lg:pb-28">
+      <div className="relative mx-auto grid max-w-6xl items-center gap-6 px-4 pb-20 pt-4 sm:px-6 md:pt-12 lg:grid-cols-[1.15fr_1fr] lg:gap-14 lg:pb-28 lg:pt-16">
         <div>
           <p className="label mb-5 text-amber">{t.hero.eyebrow}</p>
           <h1 className="font-display text-[2.6rem] font-medium leading-[1.02] tracking-tight sm:text-6xl lg:text-[4.3rem]">
@@ -152,7 +154,7 @@ function Hero() {
             ))}
           </ul>
         </div>
-        <Simulation />
+        <HeroBottle className="order-first max-w-[300px] sm:max-w-[360px] lg:order-none lg:max-w-[420px]" />
       </div>
     </section>
   );
@@ -195,7 +197,7 @@ function Steps() {
   const { t } = useLocale();
   const widths = ["lg:w-[62%]", "lg:w-[81%]", "lg:w-full"];
   return (
-    <section id="how" className="scroll-mt-20 border-t border-line">
+    <section id="how" className="scroll-mt-20 overflow-hidden border-t border-line">
       <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:py-28">
         <Reveal className="text-center">
           <Kicker>{t.steps.kicker}</Kicker>
@@ -214,6 +216,9 @@ function Steps() {
             </Reveal>
           ))}
         </div>
+        <Reveal className="mx-auto mt-12 max-w-xl">
+          <Simulation />
+        </Reveal>
         <div className="mt-12 text-center">
           <PrimaryCta />
         </div>
@@ -243,8 +248,17 @@ function ShowcaseSection({ s }: { s: Showcase }) {
             <div className="rounded-3xl border border-line bg-ink p-6 sm:p-8">
               <p className="label">{t.showcase.freeLabel}</p>
               <p className="mt-1 font-display text-2xl text-muted">{t.showcase.freeTitle}</p>
-              <p className="mt-6 font-display text-5xl leading-none">{family}</p>
-              <p className="mt-3 font-display text-xl italic text-gold">{s.narrative[locale].title}</p>
+              <div className="mt-4 flex items-center gap-4">
+                <PerfumeBottle
+                  colors={(["base", "heart", "top"] as const).map((pos) => ACCORD_MAP[p.pyramid[pos][0]?.accord ?? p.topAccords[0].id].color) as [string, string, string]}
+                  label={p.family.primary[locale]}
+                  className="h-36 w-auto shrink-0"
+                />
+                <div>
+                  <p className="font-display text-5xl leading-none">{family}</p>
+                  <p className="mt-3 font-display text-xl italic text-gold">{s.narrative[locale].title}</p>
+                </div>
+              </div>
               <div className="mt-7 flex flex-col items-center gap-2">
                 {(["top", "heart", "base"] as const).map((pos, i) => (
                   <div key={pos} style={{ width: `${[64, 82, 100][i]}%` }} className={`rounded-xl border px-3 py-3 text-center ${i === 0 ? "border-amber/60 bg-amber/[0.07]" : "border-line bg-ink-2"}`}>

@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import { LangSwitch } from "@/components/LangSwitch";
 import { PyramidMark } from "@/components/PyramidMark";
+import { PerfumeBottle } from "@/components/PerfumeBottle";
 import { track } from "@/lib/pixel";
 import { ACCORD_MAP } from "@/data/accords";
 import { ASPIRATIONS, IPIP_ITEMS, LIKERT, SCENARIOS, SMELLS } from "@/data/questions";
@@ -146,7 +147,7 @@ export function Profiling() {
     else if (list.length < max) update({ [key]: [...list, id] });
   };
 
-  if (submitting) return <Composing />;
+  if (submitting) return <Composing liked={draft.liked} />;
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -383,28 +384,19 @@ function Choice({ legend, value, options, onChange }: { legend: string; value: s
 }
 
 /** Purpose: the wait for scoring + AI becomes part of the ritual instead of a spinner. */
-function Composing() {
+function Composing({ liked }: { liked: string[] }) {
   const { t } = useLocale();
-  const reduce = useReducedMotion();
   const [i, setI] = useState(0);
   useEffect(() => {
     const id = setInterval(() => setI((x) => Math.min(x + 1, t.profiling.submittingSteps.length - 1)), 800);
     return () => clearInterval(id);
   }, [t]);
+  // The bottle fills with the colours of the smells this person just picked.
+  const picked = liked.slice(0, 3).map((id) => ACCORD_MAP[primaryAccord(id)].color);
+  const colors = [picked[2] ?? picked[0] ?? "#9c7652", picked[1] ?? picked[0] ?? "#cfa968", picked[0] ?? "#e8c547"] as [string, string, string];
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center px-6 text-center" role="status" aria-live="polite">
-      <div className="flex w-56 flex-col items-center gap-2.5">
-        {[0.45, 0.72, 1].map((w, k) => (
-          <motion.span
-            key={k}
-            className={`h-3 rounded ${k === 0 ? "bg-amber" : "bg-paper/70"}`}
-            style={{ width: `${w * 100}%` }}
-            initial={reduce ? false : { scaleX: 0, opacity: 0 }}
-            animate={{ scaleX: 1, opacity: k === 0 ? 1 : 0.4 + k * 0.2 }}
-            transition={{ duration: 0.8, delay: k * 0.6, ease: [0.22, 1, 0.36, 1] }}
-          />
-        ))}
-      </div>
+      <PerfumeBottle colors={colors} shape="classic" fill={0.82} mist delay={0.2} className="h-64 w-auto drop-shadow-[0_30px_40px_rgba(0,0,0,0.6)] sm:h-72" />
       <p className="mt-10 font-display text-3xl">{t.profiling.submitting}</p>
       <AnimatePresence mode="wait">
         <motion.p key={i} className="mt-3 text-sm text-muted" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}>

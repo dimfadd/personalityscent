@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 import { getProfile } from "@/lib/profiles";
 import { ACCORD_MAP } from "@/data/accords";
+import { bottleSvgDataUri } from "@/lib/bottle-svg";
 
 /** Shareable card. Default 1080x1920 (Instagram Story); ?f=og gives 1200x630 for link previews. */
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -15,6 +16,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const labels = locale === "en" ? { top: "TOP", heart: "HEART", base: "BASE" } : { top: "ATAS", heart: "TENGAH", base: "DASAR" };
   const W = og ? 1200 : 1080, H = og ? 630 : 1920;
   const s = og ? 0.55 : 1;
+  const colors = (["base", "heart", "top"] as const).map((pos) => ACCORD_MAP[prof.pyramid[pos][0]?.accord ?? prof.topAccords[0].id].color) as [string, string, string];
+  const bottle = bottleSvgDataUri(colors, prof.family.primary[locale]);
 
   return new ImageResponse(
     (
@@ -24,6 +27,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
           <div style={{ fontSize: 120 * s, lineHeight: 1.02, marginTop: 40 * s }}>{family}</div>
           <div style={{ fontSize: 44 * s, color: "#cfa968", marginTop: 24 * s, fontStyle: "italic" }}>{prof.narrative.title}</div>
         </div>
+        {!og && (
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={bottle} width={340} height={544} alt="" />
+          </div>
+        )}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 22 * s }}>
           {(["top", "heart", "base"] as const).map((pos, i) => (
             <div key={pos} style={{ display: "flex", flexDirection: "column", alignItems: "center", width: `${[60, 80, 100][i]}%`, border: `2px solid ${i === 0 ? "#cfa968" : "#2c2a27"}`, borderRadius: 18 * s, padding: `${28 * s}px ${20 * s}px`, background: i === 0 ? "rgba(207,169,104,0.1)" : "#141414" }}>
