@@ -38,7 +38,9 @@ npm run dev                  # http://localhost:3000
    - `ADMIN_PASSWORD` dan `ADMIN_SECRET` (string acak panjang)
    - key AI yang dipakai, plus `AI_PROVIDER`
    - `MIDTRANS_SERVER_KEY`, `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY`, `MIDTRANS_IS_PRODUCTION`, `UNLOCK_PRICE_IDR`
-   - `NEXT_PUBLIC_SITE_URL`: domain final, misalnya `https://personalityscent.com`. Kalau kosong, dipakai domain produksi Vercel.
+   - `NEXT_PUBLIC_SITE_URL`: domain final, misalnya `https://personalityscent.store`. Kalau kosong, dipakai domain produksi Vercel.
+   - `NEXT_PUBLIC_CONTACT_EMAIL`: email kontak yang tampil di footer dan halaman legal. Midtrans biasanya memeriksa ini saat review merchant.
+   - `NEXT_PUBLIC_META_PIXEL_ID`: opsional, untuk mengukur iklan Meta. Event yang dikirim: `PageView`, `StartProfiling` (custom), `CompleteRegistration` (profil selesai), `InitiateCheckout`, `Purchase` (nilai dan mata uang IDR).
 4. **Midtrans dashboard:** set *Payment Notification URL* ke `https://<domain>/api/midtrans/notify`.
 5. **Setiap push ke `main`** otomatis jadi deploy production. Push ke branch lain menjadi *Preview*.
 
@@ -61,7 +63,9 @@ Catatan:
 
 ## Yang perlu dikerjakan sebelum rilis
 
-1. **Verifikasi database parfum.** 95 entri awal ditulis dari pengetahuan umum dan berstatus `verified: false`. Cek tiap entri ke halaman resmi brand, lalu tambahkan brand lokal dan parfum yang tersedia di Indonesia (target 200–400).
+1. **Verifikasi database parfum.** 141 entri ditulis dari pengetahuan umum dan berstatus `verified: false`. Harga adalah estimasi. Tier harga dihitung otomatis dari harga per 100 ml.
+   - Prioritas: 6 entri brand lokal (HMNS) memakai notes perkiraan (`notesApprox: true`) dan diberi label di UI. Cek ke halaman brand, lalu tambahkan brand lokal lain (target 200–400 entri).
+   - Landing page sengaja tidak menampilkan entri dengan notes perkiraan, atau nama produk yang berisiko ditolak review iklan.
 2. **Cek ID model AI default.** Untuk GPT, Grok, dan Gemini, nama model berubah cepat. Pastikan di env atau `/admin`, lalu tekan "Uji koneksi".
 3. **Terjemahan Mini-IPIP** adalah terjemahan sendiri dan belum divalidasi psikometrik.
 4. **Aset visual.** Belum ada logo final: wordmark saat ini teks ditambah motif piramida.

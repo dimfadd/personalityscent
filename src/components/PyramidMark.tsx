@@ -14,9 +14,9 @@ export function PyramidMark({ size = 22, className = "" }: { size?: number; clas
 
 export function Wordmark() {
   return (
-    <span className="inline-flex items-center gap-2 text-paper">
+    <span className="inline-flex items-center gap-2 text-amber">
       <PyramidMark />
-      <span className="font-display text-xl font-semibold tracking-tight">Personality Scent</span>
+      <span className="text-gold font-display text-xl font-semibold tracking-tight">Personality Scent</span>
     </span>
   );
 }

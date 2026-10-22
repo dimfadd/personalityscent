@@ -5,16 +5,13 @@ import { useCallback, useEffect, useState } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import { LangSwitch } from "@/components/LangSwitch";
 import { Wordmark } from "@/components/PyramidMark";
+import { RecCard } from "./RecCard";
+import { SiteFooter } from "@/components/SiteFooter";
+import { track } from "@/lib/pixel";
 import { ACCORD_MAP } from "@/data/accords";
 import { TRAIT_LABELS } from "@/data/questions";
 import { BIG_FIVE, type NotePosition, type Recommendation, type ScentProfile } from "@/lib/types";
 
-const TIER: Record<Recommendation["tier"], { id: string; en: string }> = {
-  affordable: { id: "Terjangkau", en: "Affordable" },
-  mid: { id: "Menengah", en: "Mid-range" },
-  designer: { id: "Designer", en: "Designer" },
-  niche: { id: "Niche", en: "Niche" },
-};
 const formatIdr = (n: number) => "Rp" + n.toLocaleString("id-ID");
 
 type SnapCallbacks = { onSuccess?: () => void; onPending?: () => void; onError?: () => void; onClose?: () => void };
@@ -52,12 +49,17 @@ export function ResultView({ id, profile, paid: initialPaid, price }: { id: stri
       try {
         const r = await fetch(`/api/checkout/status?orderId=${encodeURIComponent(oid)}`);
         const d = await r.json();
-        if (d.paid) { setPaid(true); setPay("idle"); return; }
+        if (d.paid) {
+          setPaid(true);
+          setPay("idle");
+          track("Purchase", { value: price, currency: "IDR", content_name: "perfume_matches" }, false);
+          return;
+        }
       } catch { /* retry */ }
       await new Promise((res) => setTimeout(res, 2000));
     }
     setPay("pending");
-  }, []);
+  }, [price]);
 
   // Returning from Midtrans' redirect page carries ?order=...
   useEffect(() => {
@@ -69,6 +71,7 @@ export function ResultView({ id, profile, paid: initialPaid, price }: { id: stri
 
   async function unlock() {
     setPay("opening");
+    track("InitiateCheckout", { value: price, currency: "IDR", content_name: "perfume_matches" });
     try {
       const r = await fetch("/api/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ profileId: id }) });
       const d = await r.json();
@@ -261,15 +264,18 @@ export function ResultView({ id, profile, paid: initialPaid, price }: { id: stri
           <Link href="/" className="inline-flex min-h-11 items-center rounded-md px-5 text-sm text-muted hover:text-paper">{t.result.home}</Link>
         </div>
       </main>
+      <SiteFooter />
     </>
   );
 }
 
 function Recommendations({ id, demo }: { id: string; demo: boolean }) {
-  const { t, locale } = useLocale();
+  const { t } = useLocale();
   const [state, setState] = useState<"loading" | "error" | "ready">("loading");
   const [recs, setRecs] = useState<Recommendation[]>([]);
   const [rated, setRated] = useState<Record<string, number>>({});
+  const [origin, setOrigin] = useState<"all" | "local" | "international">("all");
+  const [sort, setSort] = useState<"match" | "cheap" | "pricey">("match");
 
   useEffect(() => {
     fetch(`/api/profile/${id}/recommendations`)
@@ -283,58 +289,74 @@ function Recommendations({ id, demo }: { id: string; demo: boolean }) {
     await fetch("/api/feedback", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ profileId: id, perfumeId, rating }) }).catch(() => {});
   }
 
+  const shown = recs
+    .filter((r) => origin === "all" || r.origin === origin)
+    .sort((a, b) => (sort === "cheap" ? a.priceIdr - b.priceIdr : sort === "pricey" ? b.priceIdr - a.priceIdr : b.match - a.match));
+  const best = recs[0]?.perfumeId;
+
   return (
     <div>
       <h2 id="recs" className="font-display text-4xl">{t.result.recsTitle}</h2>
       {demo && <p className="mt-3 rounded-lg border border-line p-3 text-sm text-muted">{t.result.demo}</p>}
       {state === "loading" && (
         <div className="mt-8 grid gap-4 sm:grid-cols-2" role="status" aria-label={t.result.loading}>
-          {[0, 1, 2, 3].map((i) => <div key={i} className="h-48 animate-pulse rounded-2xl bg-ink-2" />)}
+          {[0, 1, 2, 3].map((i) => <div key={i} className="h-56 animate-pulse rounded-2xl bg-ink-2" />)}
         </div>
       )}
       {state === "error" && <p role="alert" className="mt-6 text-red-200">{t.result.recsError}</p>}
       {state === "ready" && recs.length === 0 && <p className="mt-6 text-muted">{t.result.recsEmpty}</p>}
       {state === "ready" && recs.length > 0 && (
         <>
-          <ol className="mt-8 grid gap-4 sm:grid-cols-2">
-            {recs.map((r, i) => (
-              <motion.li key={r.perfumeId} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
-                className={`rounded-2xl border p-6 ${i === 0 ? "border-amber/70 bg-amber/[0.05] sm:col-span-2" : "border-line"}`}>
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="label">{r.brand} · {TIER[r.tier][locale]}</p>
-                    <p className={`mt-1 font-display ${i === 0 ? "text-4xl" : "text-2xl"}`}>{r.name}</p>
-                  </div>
-                  <p className="shrink-0 text-right"><span className="font-display text-3xl text-amber tabular-nums">{r.match}%</span><br /><span className="text-xs text-muted">{t.result.match}</span></p>
-                </div>
-                {r.sharedAccords.length > 0 && (
-                  <p className="mt-3 text-sm text-muted">
-                    {t.result.because}: {r.sharedAccords.map((a) => ACCORD_MAP[a].name[locale]).join(", ")}
-                  </p>
-                )}
-                <dl className="mt-4 grid grid-cols-[3.5rem_1fr] gap-x-3 gap-y-1 text-sm">
-                  {(["top", "heart", "base"] as const).map((pos) => (
-                    <div key={pos} className="contents">
-                      <dt className="text-muted">{t.result[pos]}</dt>
-                      <dd>{r.notes[pos].join(", ")}</dd>
-                    </div>
-                  ))}
-                </dl>
-                <div className="mt-5 flex flex-wrap items-center gap-2 text-xs text-muted">
-                  <span>{rated[r.perfumeId] ? t.result.thanks : t.result.rate}</span>
-                  <span role="group" aria-label={t.result.rate} className="flex gap-1">
-                    {[1, 2, 3, 4, 5].map((n) => (
-                      <button key={n} type="button" onClick={() => rate(r.perfumeId, n)} aria-pressed={rated[r.perfumeId] === n}
-                        className={`h-9 w-9 rounded-md border text-sm ${rated[r.perfumeId] && n <= rated[r.perfumeId] ? "border-amber bg-amber text-ink" : "border-line hover:border-muted"}`}>
-                        {n}
-                      </button>
-                    ))}
-                  </span>
-                </div>
-              </motion.li>
-            ))}
-          </ol>
-          <p className="mt-6 text-xs text-muted">{t.result.unverified}</p>
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div role="radiogroup" aria-label={t.result.filterAll} className="flex flex-wrap gap-2">
+              {([["all", t.result.filterAll], ["local", t.result.filterLocal], ["international", t.result.filterIntl]] as const).map(([v, label]) => {
+                const count = v === "all" ? recs.length : recs.filter((r) => r.origin === v).length;
+                return (
+                  <button key={v} type="button" role="radio" aria-checked={origin === v} onClick={() => setOrigin(v)}
+                    className={`min-h-11 rounded-full border px-4 text-sm transition-colors ${origin === v ? "border-amber bg-amber text-ink" : "border-line text-muted hover:text-paper"}`}>
+                    {label} <span className="tabular-nums opacity-70">{count}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <label className="flex items-center gap-2 text-sm text-muted">
+              {t.result.sortLabel}
+              <select value={sort} onChange={(e) => setSort(e.target.value as typeof sort)} className="min-h-11 rounded-full border border-line bg-ink px-4 text-paper focus:border-amber focus:outline-none">
+                <option value="match">{t.result.sortMatch}</option>
+                <option value="cheap">{t.result.sortCheap}</option>
+                <option value="pricey">{t.result.sortPricey}</option>
+              </select>
+            </label>
+          </div>
+
+          {shown.length === 0 ? (
+            <p className="mt-8 text-muted">{t.result.noneInFilter}</p>
+          ) : (
+            <ol className="mt-6 grid gap-4 sm:grid-cols-2">
+              {shown.map((r, i) => {
+                const featured = r.perfumeId === best && sort === "match" && origin === "all";
+                return (
+                  <motion.li key={r.perfumeId} layout initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i, 6) * 0.05 }}
+                    className={featured ? "sm:col-span-2" : ""}>
+                    <RecCard r={r} featured={featured}>
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
+                        <span>{rated[r.perfumeId] ? t.result.thanks : t.result.rate}</span>
+                        <span role="group" aria-label={t.result.rate} className="flex gap-1">
+                          {[1, 2, 3, 4, 5].map((n) => (
+                            <button key={n} type="button" onClick={() => rate(r.perfumeId, n)} aria-pressed={rated[r.perfumeId] === n}
+                              className={`h-9 w-9 rounded-full border text-sm ${rated[r.perfumeId] && n <= rated[r.perfumeId] ? "border-amber bg-amber text-ink" : "border-line hover:border-muted"}`}>
+                              {n}
+                            </button>
+                          ))}
+                        </span>
+                      </div>
+                    </RecCard>
+                  </motion.li>
+                );
+              })}
+            </ol>
+          )}
+          <p className="mt-6 text-xs text-muted">{t.result.priceNote} {t.result.unverified}</p>
         </>
       )}
     </div>

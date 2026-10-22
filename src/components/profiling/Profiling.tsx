@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import { LangSwitch } from "@/components/LangSwitch";
 import { PyramidMark } from "@/components/PyramidMark";
+import { track } from "@/lib/pixel";
 import { ACCORD_MAP } from "@/data/accords";
 import { ASPIRATIONS, IPIP_ITEMS, LIKERT, SCENARIOS, SMELLS } from "@/data/questions";
 import type { AccordId, Climate, Expression, Intensity, Occasion, PriceTier, ProfileAnswers } from "@/lib/types";
@@ -93,6 +94,7 @@ export function Profiling() {
   const [aiOn, setAiOn] = useState<boolean | null>(null);
 
   useEffect(() => {
+    track("StartProfiling", undefined, true);
     fetch("/api/status").then((r) => r.json()).then((s) => setAiOn(Boolean(s.ai))).catch(() => setAiOn(false));
   }, []);
 
@@ -126,6 +128,7 @@ export function Profiling() {
       const r = await fetch("/api/profile", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
       if (!r.ok) throw new Error(String(r.status));
       const { id } = await r.json();
+      track("CompleteRegistration", { content_name: "scent_dna" });
       // Let the composing animation finish one pass so the reveal does not feel abrupt.
       const wait = Math.max(0, 3200 - (Date.now() - started));
       await new Promise((res) => setTimeout(res, reduce ? 0 : wait));

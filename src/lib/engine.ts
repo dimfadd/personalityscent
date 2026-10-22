@@ -167,7 +167,7 @@ function cosine(a: AccordVector, b: AccordVector) {
   return na && nb ? dot / Math.sqrt(na * nb) : 0;
 }
 
-export function recommend(profile: Pick<ScentProfile, "vector" | "avoided">, a: Pick<ProfileAnswers, "expression" | "intensity" | "budget">, limit = 9): Recommendation[] {
+export function recommend(profile: Pick<ScentProfile, "vector" | "avoided">, a: Pick<ProfileAnswers, "expression" | "intensity" | "budget">, limit = 12): Recommendation[] {
   const user = profile.vector;
   const scored = PERFUMES.filter((p) => {
     if (a.expression === "feminine") return p.gender !== "masculine";
@@ -186,17 +186,19 @@ export function recommend(profile: Pick<ScentProfile, "vector" | "avoided">, a: 
   });
   scored.sort((x, y) => y.s - x.s);
 
-  // Keep the best overall, but guarantee at least one pick per price tier when possible.
+  // Best overall, plus guaranteed coverage so the buyer can choose by price and origin:
+  // one pick per price tier, two local picks, and three in the budget they asked for.
   const picked: typeof scored = [];
-  const tiers: PriceTier[] = a.budget === "any" ? ["affordable", "mid", "designer", "niche"] : [a.budget];
-  for (const t of tiers) {
-    const best = scored.find((x) => x.p.tier === t && !picked.includes(x));
-    if (best) picked.push(best);
-  }
-  for (const x of scored) {
-    if (picked.length >= limit) break;
-    if (!picked.includes(x)) picked.push(x);
-  }
+  const take = (pred: (x: (typeof scored)[number]) => boolean, n: number) => {
+    for (const x of scored) {
+      if (n <= 0 || picked.length >= limit) break;
+      if (pred(x) && !picked.includes(x)) { picked.push(x); n--; }
+    }
+  };
+  if (a.budget !== "any") take((x) => x.p.tier === a.budget, 3);
+  take((x) => x.p.origin === "local", 2);
+  for (const t of ["affordable", "mid", "designer", "niche"] as PriceTier[]) take((x) => x.p.tier === t, 1);
+  take(() => true, limit);
   picked.sort((x, y) => y.s - x.s);
 
   return picked.map(({ p, s, shared }) => ({
@@ -208,6 +210,10 @@ export function recommend(profile: Pick<ScentProfile, "vector" | "avoided">, a: 
     match: Math.max(0, Math.min(99, Math.round(s * 100))),
     sharedAccords: shared,
     notes: p.notes,
+    priceIdr: p.priceIdr,
+    sizeMl: p.sizeMl,
+    origin: p.origin,
+    notesApprox: p.notesApprox,
   }));
 }
 

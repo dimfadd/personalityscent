@@ -78,5 +78,9 @@ export type Recommendation = {
   gender: PerfumeGender;
   match: number;
   sharedAccords: AccordId[];
+  priceIdr: number;
+  sizeMl: number;
+  origin: "local" | "international";
+  notesApprox: boolean;
   notes: { top: string[]; heart: string[]; base: string[] };
 };

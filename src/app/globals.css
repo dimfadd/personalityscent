@@ -1,19 +1,20 @@
 @import "tailwindcss";
 
 /*
-  Palette (R-29): ink brown (surfaces) + paper (text) + one amber accent.
-  Reason: a perfume boutique at night, warm and low-lit, with amber as the "glow" of a lit bottle.
-  Accord colours appear only as data encoding in charts.
+  Palette (R-29): black surfaces + white text + one gold accent.
+  Reason: the brand's original identity (black background, gold wordmark, white copy),
+  read as an evening perfume counter. Accord colours appear only as data encoding.
+  Token names are kept (ink/paper/amber) so components stay unchanged.
 */
 @theme {
-  --color-ink: #15110e;
-  --color-ink-2: #1d1814;
-  --color-ink-3: #28211b;
-  --color-line: #3d3229;
-  --color-paper: #f3eadd;
-  --color-muted: #bbae9e;
-  --color-amber: #d9a35c;
-  --color-amber-deep: #b07a3e;
+  --color-ink: #0a0a0a;
+  --color-ink-2: #121212;
+  --color-ink-3: #1b1b1b;
+  --color-line: #2c2a27;
+  --color-paper: #ffffff;
+  --color-muted: #a9a6a1;
+  --color-amber: #cfa968;
+  --color-amber-deep: #9c7a3c;
 
   --font-display: var(--font-cormorant), "Times New Roman", serif;
   --font-sans: var(--font-manrope), system-ui, sans-serif;
@@ -63,4 +64,12 @@ body {
   text-transform: uppercase;
   color: var(--color-muted);
   font-weight: 600;
+}
+
+/* Gold foil for the brand wordmark and key display words only (identity, not decoration). */
+.text-gold {
+  background: linear-gradient(100deg, #f3dfae 0%, #cfa968 45%, #a8823f 70%, #e8cf93 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
