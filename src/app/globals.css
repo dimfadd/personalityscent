@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+/*
+  Palette (R-29): ink brown (surfaces) + paper (text) + one amber accent.
+  Reason: a perfume boutique at night, warm and low-lit, with amber as the "glow" of a lit bottle.
+  Accord colours appear only as data encoding in charts.
+*/
+@theme {
+  --color-ink: #15110e;
+  --color-ink-2: #1d1814;
+  --color-ink-3: #28211b;
+  --color-line: #3d3229;
+  --color-paper: #f3eadd;
+  --color-muted: #bbae9e;
+  --color-amber: #d9a35c;
+  --color-amber-deep: #b07a3e;
+
+  --font-display: var(--font-cormorant), "Times New Roman", serif;
+  --font-sans: var(--font-manrope), system-ui, sans-serif;
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-ink);
+  color: var(--color-paper);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-amber);
+  color: var(--color-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-amber);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Small caps label used across the site: the "perfumer's label" voice. */
+.label {
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  font-weight: 600;
+}
