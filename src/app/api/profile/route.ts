@@ -1,6 +1,9 @@
 import { AnswersSchema, createProfile } from "@/lib/profiles";
 import type { ProfileAnswers } from "@/lib/types";
 
+// Two AI calls (story + narrative) can take a while on larger models.
+export const maxDuration = 60;
+
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
   const parsed = AnswersSchema.safeParse(body);

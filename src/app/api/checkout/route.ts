@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { query } from "@/lib/db";
+import { siteUrl } from "@/lib/site";
 import { getProfile, markPaid } from "@/lib/profiles";
 import { createSnapTransaction, midtransConfigured, snapScriptUrl, unlockPrice } from "@/lib/midtrans";
 
@@ -22,7 +23,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const origin = process.env.NEXT_PUBLIC_SITE_URL ?? new URL(req.url).origin;
+    const origin = siteUrl(new URL(req.url).origin);
     const snap = await createSnapTransaction(orderId, amount, "Personality Scent: rekomendasi parfum", `${origin}/result/${p.id}?order=${orderId}`);
     await query("update orders set snap_token = $2 where id = $1", [orderId, snap.token]);
     return Response.json({ orderId, token: snap.token, clientKey: process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY, snapUrl: snapScriptUrl() });

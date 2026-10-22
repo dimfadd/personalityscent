@@ -41,13 +41,27 @@ create table if not exists feedback (
 );
 `;
 
+/**
+ * Pass plain objects for jsonb columns. postgres.js encodes them itself (a pre-stringified
+ * string would be stored as a JSON string, double-encoded); PGlite needs the JSON text.
+ */
+function toPgliteParam(p: unknown) {
+  return p !== null && typeof p === "object" && !(p instanceof Date) ? JSON.stringify(p) : p;
+}
+
 const g = globalThis as unknown as { __psDb?: Promise<Query> };
 
 async function init(): Promise<Query> {
   let q: Query;
-  if (process.env.DATABASE_URL) {
+  // Vercel's Neon/Postgres integrations expose DATABASE_URL or POSTGRES_URL.
+  const url = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+  if (!url && process.env.VERCEL) {
+    throw new Error("DATABASE_URL is not set. Vercel has no persistent disk, so the embedded PGlite fallback cannot be used. Connect a Postgres database (e.g. Neon) in the Vercel dashboard.");
+  }
+  if (url) {
     const { default: postgres } = await import("postgres");
-    const sql = postgres(process.env.DATABASE_URL, { max: 5, prepare: false });
+    // Serverless: keep few connections per instance; prepare:false works with transaction poolers (Neon, Supabase).
+    const sql = postgres(url, { max: process.env.VERCEL ? 1 : 5, prepare: false, idle_timeout: 20 });
     q = async (text, params = []) => (await sql.unsafe(text, params as never[])) as unknown as Row[];
     for (const stmt of SCHEMA.split(";").map((s) => s.trim()).filter(Boolean)) await sql.unsafe(stmt);
   } else {
@@ -57,7 +71,7 @@ async function init(): Promise<Query> {
     mkdirSync(dir, { recursive: true });
     const db = new PGlite(dir);
     await db.exec(SCHEMA);
-    q = async (text, params = []) => (await db.query<Row>(text, params)).rows;
+    q = async (text, params = []) => (await db.query<Row>(text, params.map(toPgliteParam))).rows;
   }
   return q;
 }

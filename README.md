@@ -30,6 +30,23 @@ npm run dev                  # http://localhost:3000
 - Tanpa key Midtrans, tombol bayar di mode development langsung membuka rekomendasi dan memberi label "mode demo". Di production, endpoint menolak dengan status 503.
 - Set URL notifikasi Midtrans ke `https://<domain>/api/midtrans/notify`.
 
+## Deploy ke Vercel
+
+1. **Import repo** di vercel.com → *Add New Project* → pilih `dimfadd/personalityscent`. Framework terdeteksi otomatis sebagai Next.js, tidak perlu mengubah build command.
+2. **Database wajib.** Vercel tidak punya disk permanen, jadi PGlite lokal tidak bisa dipakai. Di tab *Storage* proyek, tambahkan **Neon (Postgres)** dari Marketplace. Integrasi ini mengisi `DATABASE_URL` otomatis. Tabel dibuat sendiri saat request pertama. Kalau `DATABASE_URL` kosong, aplikasi memberi error yang jelas.
+3. **Environment variables** (*Settings → Environment Variables*), salin dari `.env.example`:
+   - `ADMIN_PASSWORD` dan `ADMIN_SECRET` (string acak panjang)
+   - key AI yang dipakai, plus `AI_PROVIDER`
+   - `MIDTRANS_SERVER_KEY`, `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY`, `MIDTRANS_IS_PRODUCTION`, `UNLOCK_PRICE_IDR`
+   - `NEXT_PUBLIC_SITE_URL`: domain final, misalnya `https://personalityscent.com`. Kalau kosong, dipakai domain produksi Vercel.
+4. **Midtrans dashboard:** set *Payment Notification URL* ke `https://<domain>/api/midtrans/notify`.
+5. **Setiap push ke `main`** otomatis jadi deploy production. Push ke branch lain menjadi *Preview*.
+
+Catatan:
+- Di Preview, `NODE_ENV` adalah `production`, jadi mode demo pembayaran mati. Pakai key **sandbox** Midtrans untuk env Preview.
+- Kalau Preview dan Production memakai database yang sama, data uji ikut tercampur. Integrasi Neon bisa membuat branch database per preview.
+- `/api/profile` diberi batas waktu 60 detik (`maxDuration`) karena bisa memanggil AI dua kali.
+
 ## Struktur
 
 | Path | Isi |

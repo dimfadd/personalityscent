@@ -67,8 +67,8 @@ export async function createProfile(a: ProfileAnswers): Promise<string> {
   await query("insert into profiles (id, locale, answers, profile) values ($1, $2, $3, $4)", [
     id,
     a.locale,
-    JSON.stringify(a),
-    JSON.stringify(profile),
+    a,
+    profile,
   ]);
   return id;
 }
@@ -82,7 +82,7 @@ export async function getProfile(id: string): Promise<StoredProfile | null> {
 export async function markPaid(orderId: string, raw: unknown) {
   const rows = await query<{ profile_id: string }>(
     "update orders set status = 'paid', paid_at = coalesce(paid_at, now()), raw = $2 where id = $1 returning profile_id",
-    [orderId, JSON.stringify(raw)],
+    [orderId, raw],
   );
   if (rows[0]) await query("update profiles set paid = true where id = $1", [rows[0].profile_id]);
   return rows[0]?.profile_id ?? null;

@@ -12,6 +12,6 @@ export async function POST(req: Request) {
   if (Number(n.gross_amount) !== rows[0].amount) return Response.json({ error: "amount_mismatch" }, { status: 400 });
 
   if (isPaid(n)) await markPaid(n.order_id, n);
-  else await query("update orders set status = $2, raw = $3 where id = $1 and status <> 'paid'", [n.order_id, n.transaction_status, JSON.stringify(n)]);
+  else await query("update orders set status = $2, raw = $3 where id = $1 and status <> 'paid'", [n.order_id, n.transaction_status, n]);
   return Response.json({ ok: true });
 }

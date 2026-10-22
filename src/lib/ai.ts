@@ -46,7 +46,7 @@ export async function getAiSettings(): Promise<AiSettings> {
 export async function saveAiSettings(s: AiSettings) {
   await query(
     "insert into settings (key, value) values ('ai', $1) on conflict (key) do update set value = excluded.value",
-    [JSON.stringify(s)],
+    [s],
   );
 }
 

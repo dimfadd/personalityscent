@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Manrope } from "next/font/google";
 import { LocaleProvider } from "@/components/LocaleProvider";
+import { siteUrl } from "@/lib/site";
 import "./globals.css";
 
 // Cormorant: high-contrast serif in the tradition of perfume labels. Manrope: calm, legible at small sizes.
@@ -8,7 +9,7 @@ const cormorant = Cormorant_Garamond({ variable: "--font-cormorant", subsets: ["
 const manrope = Manrope({ variable: "--font-manrope", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  metadataBase: new URL(siteUrl()),
   title: { default: "Personality Scent", template: "%s · Personality Scent" },
   description: "Ubah kepribadian dan kenangan aromamu menjadi piramida notes parfum. Turn your personality and scent memories into a perfume note pyramid.",
 };
